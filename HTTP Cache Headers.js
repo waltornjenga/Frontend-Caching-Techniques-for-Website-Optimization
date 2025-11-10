@@ -27,4 +27,16 @@ class CacheHeaderManager {
       }
     };
   }
+
+  setHeaders(res, type, content, options = {}) {
+    const config = { ...this.config[type], ...options };
+    const directives = this.buildCacheDirectives(config);
+    res.setHeader('Cache-Control', directives.join(', '));
+    
+    if (config.vary) {
+      res.setHeader('Vary', config.vary);
+    }
+
+    return true;
+  }
 }
