@@ -39,4 +39,38 @@ class CacheHeaderManager {
 
     return true;
   }
+
+  buildCacheDirectives(config) {
+    const directives = [];
+    
+    if (config.private) {
+      directives.push('private');
+    } else {
+      directives.push('public');
+    }
+
+    if (config.noCache || config.maxAge === 0) {
+      directives.push('no-cache', 'must-revalidate');
+    } else {
+      directives.push(`max-age=${config.maxAge}`);
+      
+      if (config.staleWhileRevalidate) {
+        directives.push(`stale-while-revalidate=${config.staleWhileRevalidate}`);
+      }
+      
+      if (config.staleIfError) {
+        directives.push(`stale-if-error=${config.staleIfError}`);
+      }
+      
+      if (config.immutable) {
+        directives.push('immutable');
+      }
+    }
+
+    if (config.noStore) {
+      directives.push('no-store');
+    }
+
+    return directives;
+  }
 }
