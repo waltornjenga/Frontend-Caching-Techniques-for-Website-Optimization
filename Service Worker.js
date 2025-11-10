@@ -43,6 +43,21 @@ class AdvancedServiceWorker {
     
     event.waitUntil(Promise.all(cachePromises));
   }
+
+  async handleActivate(event) {
+    const expectedCacheKeys = Object.values(this.cacheConfig)
+      .map(config => `${this.version}-${config.name}`);
+    
+    const cacheKeys = await caches.keys();
+    const deletePromises = cacheKeys.map(cacheName => {
+      if (!expectedCacheKeys.includes(cacheName)) {
+        return caches.delete(cacheName);
+      }
+    });
+
+    event.waitUntil(Promise.all(deletePromises));
+    await self.clients.claim();
+  }
 }
 
 // Instantiate the service worker
