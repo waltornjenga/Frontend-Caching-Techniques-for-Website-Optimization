@@ -338,4 +338,13 @@ class CircuitBreaker {
     
     this.states.set(url, state);
   }
+
+  recordSuccess(url) {
+    const state = this.states.get(url);
+    if (state) {
+      state.failures = 0;
+      state.state = 'CLOSED';
+      this.states.set(url, state);
+    }
+  }
 }
