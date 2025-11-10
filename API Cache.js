@@ -12,4 +12,37 @@ class HybridCache {
       redisHits: 0
     };
   }
+
+  async get(key, options = {}) {
+    const { skipMemory = false, skipRedis = false } = options;
+    
+    if (!skipMemory) {
+      const memoryResult = this.getFromMemory(key);
+      if (memoryResult !== null) {
+        this.stats.hits++;
+        this.stats.memoryHits++;
+        this.recordHit(key);
+        return memoryResult;
+      }
+    }
+
+    if (this.redisClient && !skipRedis) {
+      try {
+        const redisResult = await this.getFromRedis(key);
+        if (redisResult !== null) {
+          this.stats.hits++;
+          this.stats.redisHits++;
+          this.recordHit(key);
+          
+          this.setToMemory(key, redisResult, options.ttl);
+          return redisResult;
+        }
+      } catch (error) {
+        console.warn('Redis cache failed, falling back:', error);
+      }
+    }
+
+    this.stats.misses++;
+    return null;
+  }
 }
