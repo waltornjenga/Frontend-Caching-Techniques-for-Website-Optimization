@@ -186,4 +186,19 @@ class CacheInvalidationManager {
     }
     return total;
   }
+
+  async invalidateByPattern(pattern, strategy = 'time-based') {
+    const keys = await this.getCacheKeys();
+    const matchingKeys = keys.filter(key => key.match(pattern));
+    
+    const results = await Promise.allSettled(
+      matchingKeys.map(key => this.invalidateCache(key, strategy))
+    );
+    
+    return {
+      total: matchingKeys.length,
+      invalidated: results.filter(r => r.status === 'fulfilled' && r.value).length,
+      failed: results.filter(r => r.status === 'rejected').length
+    };
+  }
 }
