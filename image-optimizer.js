@@ -2,6 +2,10 @@ class IntelligentImageCache {
   constructor(options = {}) {
     this.cache = caches.open('images-v1');
     this.placeholderCache = new Map();
+    this.intersectionObserver = new IntersectionObserver(this.handleIntersection.bind(this), {
+      rootMargin: '50px 0px',
+      threshold: 0.01
+    });
     
     this.config = {
       quality: options.quality || 80,
@@ -107,5 +111,45 @@ class IntelligentImageCache {
     };
     
     return btoa(JSON.stringify(keyData)).replace(/[^a-z0-9]/gi, '');
+  }
+
+  lazyLoadImage(imgElement, options = {}) {
+    const src = imgElement.dataset.src || imgElement.src;
+    
+    if (!this.config.lazyLoad) {
+      this.loadImage(imgElement, src, options);
+      return;
+    }
+
+    this.intersectionObserver.observe(imgElement);
+    
+    imgElement._loadCallback = () => this.loadImage(imgElement, src, options);
+  }
+
+  async handleIntersection(entries) {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        this.intersectionObserver.unobserve(img);
+        
+        if (img._loadCallback) {
+          img._loadCallback();
+        }
+      }
+    }
+  }
+
+  async loadImage(imgElement, src, options) {
+    try {
+      const optimizedUrl = await this.optimizeImage(src, options);
+      this.applyFinalImage(imgElement, optimizedUrl);
+    } catch (error) {
+      console.error('Image optimization failed:', error);
+      this.applyFinalImage(imgElement, src);
+    }
+  }
+
+  applyFinalImage(imgElement, src) {
+    imgElement.src = src;
   }
 }
