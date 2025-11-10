@@ -62,4 +62,32 @@ class HybridCache {
     
     return true;
   }
+
+  getFromMemory(key) {
+    const item = this.memoryCache.get(key);
+    
+    if (!item) return null;
+    
+    if (Date.now() > item.expiry) {
+      this.memoryCache.delete(key);
+      return null;
+    }
+    
+    item.lastAccessed = Date.now();
+    return item.value;
+  }
+
+  setToMemory(key, value, ttl, priority = 1) {
+    if (this.memoryCache.size >= this.memoryLimit) {
+      this.evictFromMemory();
+    }
+    
+    this.memoryCache.set(key, {
+      value,
+      expiry: Date.now() + ttl,
+      lastAccessed: Date.now(),
+      priority,
+      size: this.calculateSize(value)
+    });
+  }
 }
