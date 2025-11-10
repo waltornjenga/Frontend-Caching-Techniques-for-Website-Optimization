@@ -299,3 +299,11 @@ class IntelligentAPICache {
     return Promise.all(promises);
   }
 }
+
+class CircuitBreaker {
+  constructor(options = {}) {
+    this.failureThreshold = options.failureThreshold || 5;
+    this.resetTimeout = options.resetTimeout || 60000;
+    this.states = new Map();
+  }
+}
