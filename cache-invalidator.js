@@ -5,6 +5,7 @@ class CacheInvalidationManager {
     this.invalidationStrategies = new Map();
     this.backgroundSync = new BackgroundSyncManager();
     this.memoryCache = new Map();
+    this.hitCount = 0;
     
     this.setupStrategies();
   }
@@ -171,5 +172,18 @@ class CacheInvalidationManager {
     }
 
     return entry;
+  }
+
+  calculateSize(obj) {
+    const str = typeof obj === 'string' ? obj : JSON.stringify(obj);
+    return new TextEncoder().encode(str).length;
+  }
+
+  getTotalCacheSize() {
+    let total = 0;
+    for (const [key, entry] of this.memoryCache) {
+      total += entry.size;
+    }
+    return total;
   }
 }
