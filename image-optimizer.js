@@ -203,4 +203,34 @@ class IntelligentImageCache {
     
     return canvas.toDataURL();
   }
+
+  async preloadCriticalImages(selectors = ['img[loading="eager"]']) {
+    const criticalImages = Array.from(document.querySelectorAll(selectors.join(',')));
+    
+    const preloadPromises = criticalImages.map(async img => {
+      const src = img.src || img.dataset.src;
+      if (src) {
+        try {
+          const optimized = await this.optimizeImage(src);
+          return this.preloadImage(optimized);
+        } catch (error) {
+          return this.preloadImage(src);
+        }
+      }
+    });
+    
+    await Promise.all(preloadPromises);
+  }
+
+  async preloadImage(src) {
+    return new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = src;
+      link.onload = resolve;
+      link.onerror = reject;
+      document.head.appendChild(link);
+    });
+  }
 }
