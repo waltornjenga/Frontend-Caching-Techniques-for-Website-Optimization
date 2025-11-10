@@ -4,6 +4,7 @@ class CacheInvalidationManager {
     this.dependencies = new Map();
     this.invalidationStrategies = new Map();
     this.backgroundSync = new BackgroundSyncManager();
+    this.memoryCache = new Map();
     
     this.setupStrategies();
   }
@@ -129,5 +130,46 @@ class CacheInvalidationManager {
     const cachedDep = cachedDependencies?.[dependencyKey];
     
     return currentDep && currentDep.version !== cachedDep?.version;
+  }
+
+  async setCache(key, data, options = {}) {
+    const entry = {
+      data,
+      timestamp: Date.now(),
+      version: this.version,
+      dependencies: options.dependencies || {},
+      accessCount: 0,
+      size: this.calculateSize(data),
+      metadata: options.metadata || {}
+    };
+
+    if (options.priority === 'high') {
+      await this.setToMemoryCache(key, entry);
+    }
+    
+    await this.setToLocalStorage(key, entry);
+    
+    if (options.persistent) {
+      await this.setToIDB(key, entry);
+    }
+  }
+
+  async getCacheEntry(key) {
+    let entry = await this.getFromMemoryCache(key);
+    
+    if (!entry) {
+      entry = await this.getFromLocalStorage(key);
+    }
+    
+    if (!entry && await this.hasIDBEntry(key)) {
+      entry = await this.getFromIDB(key);
+    }
+
+    if (entry) {
+      entry.accessCount++;
+      await this.updateAccessTime(key, entry);
+    }
+
+    return entry;
   }
 }
