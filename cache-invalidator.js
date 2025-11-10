@@ -255,6 +255,76 @@ class CacheInvalidationManager {
       .slice(0, count)
       .map(([key, entry]) => ({ key, accesses: entry.accessCount }));
   }
+
+  async setToMemoryCache(key, entry) {
+    this.memoryCache.set(key, entry);
+  }
+
+  async getFromMemoryCache(key) {
+    return this.memoryCache.get(key);
+  }
+
+  async setToLocalStorage(key, entry) {
+    try {
+      localStorage.setItem(`cache_${key}`, JSON.stringify(entry));
+    } catch (error) {
+      console.warn('LocalStorage set failed:', error.message);
+    }
+  }
+
+  async getFromLocalStorage(key) {
+    try {
+      const item = localStorage.getItem(`cache_${key}`);
+      return item ? JSON.parse(item) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async clearCache(key) {
+    this.memoryCache.delete(key);
+    try {
+      localStorage.removeItem(`cache_${key}`);
+    } catch (error) {
+      console.warn('LocalStorage remove failed:', error.message);
+    }
+  }
+
+  async getCacheKeys() {
+    const keys = Array.from(this.memoryCache.keys());
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('cache_')) {
+          keys.push(key.replace('cache_', ''));
+        }
+      }
+    } catch (error) {
+      console.warn('Error getting cache keys:', error.message);
+    }
+    return [...new Set(keys)];
+  }
+
+  async getCacheData(key) {
+    const entry = await this.getCacheEntry(key);
+    return entry ? entry.data : null;
+  }
+
+  async updateAccessTime(key, entry) {
+    entry.lastAccessed = Date.now();
+    await this.setToMemoryCache(key, entry);
+  }
+
+  getOldestEntry() {
+    const entries = Array.from(this.memoryCache.entries());
+    if (entries.length === 0) return null;
+    
+    const oldest = entries.reduce((oldest, current) => {
+      return current[1].timestamp < oldest[1].timestamp ? current : oldest;
+    });
+    
+    return { key: oldest[0], timestamp: oldest[1].timestamp };
+  }
 }
 
 class BackgroundSyncManager {
@@ -324,3 +394,8 @@ class BackgroundSyncManager {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
+
+export {
+  CacheInvalidationManager,
+  BackgroundSyncManager
+};
