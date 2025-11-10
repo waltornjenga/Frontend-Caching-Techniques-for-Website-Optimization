@@ -96,4 +96,24 @@ class CacheInvalidationManager {
 
     return this.getCacheData(key);
   }
+
+  async refreshAndGet(key, fetchFn) {
+    try {
+      const freshData = await fetchFn();
+      await this.setCache(key, freshData);
+      return freshData;
+    } catch (error) {
+      const staleData = await this.getStaleData(key);
+      if (staleData) {
+        console.warn('Using stale data due to refresh failure:', error.message);
+        return staleData;
+      }
+      throw error;
+    }
+  }
+
+  async getStaleData(key) {
+    const entry = await this.getCacheEntry(key);
+    return entry ? entry.data : null;
+  }
 }
