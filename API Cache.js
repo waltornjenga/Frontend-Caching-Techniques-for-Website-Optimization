@@ -306,4 +306,36 @@ class CircuitBreaker {
     this.resetTimeout = options.resetTimeout || 60000;
     this.states = new Map();
   }
+
+  canRequest(url) {
+    const state = this.states.get(url) || { failures: 0, lastFailure: 0, state: 'CLOSED' };
+    
+    if (state.state === 'OPEN') {
+      if (Date.now() - state.lastFailure > this.resetTimeout) {
+        state.state = 'HALF_OPEN';
+        state.failures = 0;
+      } else {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  recordFailure(url) {
+    let state = this.states.get(url);
+    
+    if (!state) {
+      state = { failures: 0, lastFailure: 0, state: 'CLOSED' };
+    }
+    
+    state.failures++;
+    state.lastFailure = Date.now();
+    
+    if (state.failures >= this.failureThreshold) {
+      state.state = 'OPEN';
+    }
+    
+    this.states.set(url, state);
+  }
 }
