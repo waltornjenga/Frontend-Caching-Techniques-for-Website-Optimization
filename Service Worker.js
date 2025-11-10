@@ -88,7 +88,19 @@ class AdvancedServiceWorker {
       case 'SKIP_WAITING':
         self.skipWaiting();
         break;
+      case 'CLEAR_CACHE':
+        this.clearCache(payload);
+        break;
     }
+  }
+
+  async clearCache(types = []) {
+    const cacheKeys = types.length > 0 
+      ? types.map(type => `${this.version}-${this.cacheConfig[type].name}`)
+      : await caches.keys();
+    
+    const deletePromises = cacheKeys.map(cacheName => caches.delete(cacheName));
+    await Promise.all(deletePromises);
   }
 
   getCacheStrategy(request) {
