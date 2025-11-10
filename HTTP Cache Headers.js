@@ -171,3 +171,15 @@ class CacheHeaderManager {
 const cacheManager = new CacheHeaderManager();
 app.use(cacheManager.middleware());
 app.get('/static/*', cacheManager.staticFileHandler('./public'));
+
+// API route with conditional caching
+app.get('/api/data', async (req, res) => {
+  const data = await fetchDataFromDB();
+  const cacheKey = JSON.stringify(data);
+  
+  res.setCacheHeaders('api', cacheKey, {
+    staleWhileRevalidate: 1800 // 30 minutes
+  });
+  
+  res.json(data);
+});
