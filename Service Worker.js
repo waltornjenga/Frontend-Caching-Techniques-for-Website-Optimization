@@ -128,7 +128,7 @@ class AdvancedServiceWorker {
       }
     }
     
-    return 'network_first';
+    return 'stale_while_revalidate';
   }
 
   async cache_first(request) {
