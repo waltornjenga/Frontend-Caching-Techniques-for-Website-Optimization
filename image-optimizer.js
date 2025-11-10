@@ -155,7 +155,17 @@ class IntelligentImageCache {
   async loadImage(imgElement, src, options) {
     try {
       const optimizedUrl = await this.optimizeImage(src, options);
-      this.applyFinalImage(imgElement, optimizedUrl);
+      
+      const img = new Image();
+      img.onload = () => {
+        this.applyFinalImage(imgElement, optimizedUrl);
+        this.prefetchRelated(src, options);
+      };
+      img.onerror = () => {
+        console.warn('Failed to load optimized image, falling back to original');
+        this.applyFinalImage(imgElement, src);
+      };
+      img.src = optimizedUrl;
     } catch (error) {
       console.error('Image optimization failed:', error);
       this.applyFinalImage(imgElement, src);
@@ -168,6 +178,18 @@ class IntelligentImageCache {
     imgElement.classList.add('lqip-loaded');
     
     imgElement.style.backgroundImage = '';
+  }
+
+  prefetchRelated(currentSrc, options) {
+    const relatedImages = this.findRelatedImages(currentSrc);
+    
+    relatedImages.forEach(src => {
+      this.optimizeImage(src, options).catch(() => {});
+    });
+  }
+
+  findRelatedImages(src) {
+    return [];
   }
 
   async decodeBlurhash(hash, width, height) {
