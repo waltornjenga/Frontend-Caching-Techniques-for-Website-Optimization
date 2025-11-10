@@ -121,9 +121,22 @@ class IntelligentImageCache {
       return;
     }
 
+    this.setPlaceholder(imgElement, options);
+    
     this.intersectionObserver.observe(imgElement);
     
     imgElement._loadCallback = () => this.loadImage(imgElement, src, options);
+  }
+
+  async setPlaceholder(imgElement, options) {
+    if (options.blurhash) {
+      const placeholder = await this.decodeBlurhash(options.blurhash, 32, 32);
+      imgElement.style.backgroundImage = `url(${placeholder})`;
+      imgElement.style.backgroundSize = 'cover';
+      imgElement.classList.add('lqip-loading');
+    } else {
+      imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg==';
+    }
   }
 
   async handleIntersection(entries) {
@@ -151,5 +164,21 @@ class IntelligentImageCache {
 
   applyFinalImage(imgElement, src) {
     imgElement.src = src;
+    imgElement.classList.remove('lqip-loading');
+    imgElement.classList.add('lqip-loaded');
+    
+    imgElement.style.backgroundImage = '';
+  }
+
+  async decodeBlurhash(hash, width, height) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f4f4f4';
+    ctx.fillRect(0, 0, width, height);
+    
+    return canvas.toDataURL();
   }
 }
