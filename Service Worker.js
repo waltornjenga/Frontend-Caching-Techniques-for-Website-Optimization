@@ -132,6 +132,11 @@ class AdvancedServiceWorker {
     return fetch(request);
   }
 
+  async getCache(type) {
+    const config = this.cacheConfig[type];
+    return caches.open(`${this.version}-${config.name}`);
+  }
+
   isSameOrigin(request) {
     const url = new URL(request.url);
     return url.origin === self.location.origin;
