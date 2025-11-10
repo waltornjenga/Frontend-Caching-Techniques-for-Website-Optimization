@@ -73,4 +73,13 @@ class CacheHeaderManager {
 
     return directives;
   }
+
+  generateETag(content) {
+    if (typeof content === 'string') {
+      return `"${crypto.createHash('md5').update(content).digest('hex')}"`;
+    }
+    
+    // For file content or buffers
+    return `"${crypto.createHash('md5').update(JSON.stringify(content)).digest('hex')}"`;
+  }
 }
