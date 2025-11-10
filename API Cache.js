@@ -263,4 +263,27 @@ class IntelligentAPICache {
     
     return `api:${this.hashString(JSON.stringify(keyData))}`;
   }
+
+  sanitizeHeaders(headers) {
+    const sensitive = ['authorization', 'cookie', 'x-api-key'];
+    const sanitized = { ...headers };
+    
+    sensitive.forEach(header => {
+      if (sanitized[header]) {
+        sanitized[header] = '***';
+      }
+    });
+    
+    return sanitized;
+  }
+
+  hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return hash.toString(36);
+  }
 }
