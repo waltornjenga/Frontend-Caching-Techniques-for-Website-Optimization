@@ -30,6 +30,20 @@ class CacheHeaderManager {
 
   setHeaders(res, type, content, options = {}) {
     const config = { ...this.config[type], ...options };
+    
+    // Generate ETag for content-based caching
+    if (content && !config.noCache) {
+      const etag = this.generateETag(content);
+      res.setHeader('ETag', etag);
+      
+      // Check If-None-Match header
+      if (options.req && options.req.headers['if-none-match'] === etag) {
+        res.writeHead(304);
+        res.end();
+        return false;
+      }
+    }
+
     const directives = this.buildCacheDirectives(config);
     res.setHeader('Cache-Control', directives.join(', '));
     
