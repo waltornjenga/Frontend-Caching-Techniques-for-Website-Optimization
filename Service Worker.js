@@ -64,8 +64,8 @@ class AdvancedServiceWorker {
   async handleFetch(event) {
     const request = event.request;
     
-    // Skip non-GET requests
-    if (request.method !== 'GET') return;
+    // Skip non-GET requests and browser extensions
+    if (request.method !== 'GET' || request.url.startsWith('chrome-extension://')) return;
 
     // Skip cross-origin requests
     if (!this.isSameOrigin(request)) return;
