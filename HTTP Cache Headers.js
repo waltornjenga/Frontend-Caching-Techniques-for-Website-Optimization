@@ -166,3 +166,8 @@ class CacheHeaderManager {
     return mimeTypes[ext] || 'application/octet-stream';
   }
 }
+
+// Usage in Express app
+const cacheManager = new CacheHeaderManager();
+app.use(cacheManager.middleware());
+app.get('/static/*', cacheManager.staticFileHandler('./public'));
