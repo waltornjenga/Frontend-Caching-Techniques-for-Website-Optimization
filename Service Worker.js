@@ -148,6 +148,19 @@ class AdvancedServiceWorker {
     }
   }
 
+  getFallbackResponse(request) {
+    const url = new URL(request.url);
+    
+    if (url.pathname.endsWith('.html')) {
+      return caches.match('/offline.html');
+    }
+    
+    return new Response('Offline', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  }
+
   isSameOrigin(request) {
     const url = new URL(request.url);
     return url.origin === self.location.origin;
