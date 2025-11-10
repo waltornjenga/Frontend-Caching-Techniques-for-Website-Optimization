@@ -142,4 +142,24 @@ class HybridCache {
       await this.redisClient.del(key);
     }
   }
+
+  async clear() {
+    this.memoryCache.clear();
+    this.hitCounter.clear();
+    
+    if (this.redisClient) {
+      await this.redisClient.flushdb();
+    }
+  }
+
+  getStats() {
+    return {
+      ...this.stats,
+      hitRate: this.stats.hits / (this.stats.hits + this.stats.misses),
+      memorySize: this.memoryCache.size,
+      topHits: Array.from(this.hitCounter.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+    };
+  }
 }
