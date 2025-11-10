@@ -51,6 +51,11 @@ class CacheHeaderManager {
       res.setHeader('Vary', config.vary);
     }
 
+    // Set Last-Modified if provided
+    if (options.lastModified) {
+      res.setHeader('Last-Modified', options.lastModified.toUTCString());
+    }
+
     return true;
   }
 
