@@ -236,4 +236,18 @@ class IntelligentAPICache {
       this.pendingRequests.delete(cacheKey);
     }
   }
+
+  processQueue(cacheKey, data, error = null) {
+    const queue = this.requestQueue.get(cacheKey) || [];
+    
+    queue.forEach(({ resolve, reject }) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(data);
+      }
+    });
+    
+    this.requestQueue.delete(cacheKey);
+  }
 }
