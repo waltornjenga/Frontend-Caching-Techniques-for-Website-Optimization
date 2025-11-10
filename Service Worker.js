@@ -16,6 +16,13 @@ class AdvancedServiceWorker {
         patterns: [/\/api\//],
         maxEntries: 50,
         maxAgeSeconds: 300 // 5 minutes
+      },
+      pages: {
+        name: 'pages-cache',
+        strategies: ['network-first'],
+        patterns: [/\.html$/, /\//],
+        maxEntries: 20,
+        maxAgeSeconds: 3600 // 1 hour
       }
     };
     this.init();
