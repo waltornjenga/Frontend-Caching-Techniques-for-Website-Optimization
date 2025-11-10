@@ -256,3 +256,25 @@ class CacheInvalidationManager {
       .map(([key, entry]) => ({ key, accesses: entry.accessCount }));
   }
 }
+
+class BackgroundSyncManager {
+  constructor() {
+    this.syncQueue = new Map();
+    this.isOnline = navigator.onLine;
+    
+    this.setupEventListeners();
+  }
+
+  setupEventListeners() {
+    window.addEventListener('online', () => {
+      this.isOnline = true;
+      this.processSyncQueue();
+    });
+
+    window.addEventListener('offline', () => {
+      this.isOnline = false;
+    });
+
+    setInterval(() => this.processSyncQueue(), 30000);
+  }
+}
