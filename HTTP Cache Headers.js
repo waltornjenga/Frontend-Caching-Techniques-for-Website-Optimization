@@ -1,4 +1,4 @@
-// cache-headers.js
+
 import crypto from 'crypto';
 
 class CacheHeaderManager {
@@ -98,11 +98,11 @@ class CacheHeaderManager {
       return `"${crypto.createHash('md5').update(content).digest('hex')}"`;
     }
     
-    // For file content or buffers
+    
     return `"${crypto.createHash('md5').update(JSON.stringify(content)).digest('hex')}"`;
   }
 
-  // Express middleware
+  
   middleware() {
     return (req, res, next) => {
       res.setCacheHeaders = (type, content, options = {}) => {
@@ -113,7 +113,7 @@ class CacheHeaderManager {
     };
   }
 
-  // Static file handler with smart caching
+  
   staticFileHandler(rootPath) {
     const fs = require('fs').promises;
     const path = require('path');
@@ -167,12 +167,12 @@ class CacheHeaderManager {
   }
 }
 
-// Usage in Express app
+
 const cacheManager = new CacheHeaderManager();
 app.use(cacheManager.middleware());
 app.get('/static/*', cacheManager.staticFileHandler('./public'));
 
-// API route with conditional caching
+
 app.get('/api/data', async (req, res) => {
   const data = await fetchDataFromDB();
   const cacheKey = JSON.stringify(data);
