@@ -130,4 +130,16 @@ class HybridCache {
     const count = this.hitCounter.get(key) || 0;
     this.hitCounter.set(key, count + 1);
   }
+
+  calculateSize(obj) {
+    return new Blob([JSON.stringify(obj)]).size;
+  }
+
+  async del(key) {
+    this.memoryCache.delete(key);
+    
+    if (this.redisClient) {
+      await this.redisClient.del(key);
+    }
+  }
 }
