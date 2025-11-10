@@ -90,4 +90,24 @@ class HybridCache {
       size: this.calculateSize(value)
     });
   }
+
+  async getFromRedis(key) {
+    if (!this.redisClient) return null;
+    
+    const value = await this.redisClient.get(key);
+    if (!value) return null;
+    
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
+
+  async setToRedis(key, value, ttl) {
+    if (!this.redisClient) return;
+    
+    const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+    await this.redisClient.setex(key, Math.ceil(ttl / 1000), serialized);
+  }
 }
