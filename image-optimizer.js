@@ -20,6 +20,8 @@ class IntelligentImageCache {
     }
 
     const imageSet = await this.createResponsiveSet(src, options);
+    await this.cacheImageSet(cacheKey, imageSet);
+    
     return imageSet[0].url;
   }
 
@@ -56,6 +58,44 @@ class IntelligentImageCache {
     if (options.format) params.append('fm', options.format);
     
     return `${src}?${params.toString()}`;
+  }
+
+  async cacheImageSet(key, imageSet) {
+    const cache = await this.cache;
+    
+    for (const image of imageSet) {
+      try {
+        const response = await fetch(image.url);
+        if (response.ok) {
+          await cache.put(new Request(image.url), response.clone());
+        }
+      } catch (error) {
+        console.warn(`Failed to cache image: ${image.url}`, error);
+      }
+    }
+    
+    const metadata = {
+      imageSet,
+      cachedAt: Date.now(),
+      accessCount: 0
+    };
+    
+    localStorage.setItem(`img_${key}`, JSON.stringify(metadata));
+  }
+
+  async getCachedImage(key) {
+    const metadataStr = localStorage.getItem(`img_${key}`);
+    if (!metadataStr) return null;
+
+    const metadata = JSON.parse(metadataStr);
+    metadata.accessCount++;
+    localStorage.setItem(`img_${key}`, JSON.stringify(metadata));
+
+    const cache = await this.cache;
+    const primaryImage = metadata.imageSet[0];
+    const cached = await cache.match(new Request(primaryImage.url));
+    
+    return cached ? URL.createObjectURL(await cached.blob()) : null;
   }
 
   generateImageKey(src, options) {
