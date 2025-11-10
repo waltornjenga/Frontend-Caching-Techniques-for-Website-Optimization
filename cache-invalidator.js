@@ -42,4 +42,34 @@ class CacheInvalidationManager {
       action: 'clear'
     });
   }
+
+  async invalidateCache(key, strategy = 'time-based', options = {}) {
+    const cacheEntry = await this.getCacheEntry(key);
+    
+    if (!cacheEntry) return false;
+
+    const strategyConfig = this.invalidationStrategies.get(strategy);
+    if (!strategyConfig) {
+      throw new Error(`Unknown invalidation strategy: ${strategy}`);
+    }
+
+    const shouldInvalidate = strategyConfig.check(cacheEntry, options);
+    
+    if (shouldInvalidate) {
+      switch (strategyConfig.action) {
+        case 'clear':
+          await this.clearCache(key);
+          break;
+        case 'refresh':
+          await this.refreshCache(key, cacheEntry);
+          break;
+        case 'stale':
+          await this.markAsStale(key);
+          break;
+      }
+      return true;
+    }
+
+    return false;
+  }
 }
