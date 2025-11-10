@@ -201,4 +201,32 @@ class CacheInvalidationManager {
       failed: results.filter(r => r.status === 'rejected').length
     };
   }
+
+  async warmCache(keysWithUrls, options = {}) {
+    const { concurrency = 3, ttl = 3600000 } = options;
+    
+    const batches = this.chunkArray(keysWithUrls, concurrency);
+    
+    for (const batch of batches) {
+      await Promise.allSettled(
+        batch.map(async ({ key, url }) => {
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+            await this.setCache(key, data, { ttl, ...options });
+          } catch (error) {
+            console.warn(`Cache warming failed for ${key}:`, error.message);
+          }
+        })
+      );
+    }
+  }
+
+  chunkArray(array, size) {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
+  }
 }
