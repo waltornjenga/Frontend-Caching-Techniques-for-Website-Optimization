@@ -19,7 +19,7 @@ class AdvancedServiceWorker {
       },
       pages: {
         name: 'pages-cache',
-        strategies: ['network-first'],
+        strategies: ['stale-while-revalidate'],
         patterns: [/\.html$/, /\//],
         maxEntries: 20,
         maxAgeSeconds: 3600 // 1 hour
@@ -157,6 +157,25 @@ class AdvancedServiceWorker {
       
       return this.getFallbackResponse(request);
     }
+  }
+
+  async stale_while_revalidate(request) {
+    const cache = await this.getCache('pages');
+    const cachedResponse = await cache.match(request);
+    
+    const fetchPromise = fetch(request).then(async networkResponse => {
+      if (networkResponse.ok) {
+        await cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    }).catch(() => null);
+
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    const networkResponse = await fetchPromise;
+    return networkResponse || this.getFallbackResponse(request);
   }
 
   async network_only(request) {
