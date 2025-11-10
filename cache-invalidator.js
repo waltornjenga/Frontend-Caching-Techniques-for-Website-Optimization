@@ -277,4 +277,50 @@ class BackgroundSyncManager {
 
     setInterval(() => this.processSyncQueue(), 30000);
   }
+
+  scheduleRefresh(key, fetchFn, priority = 'normal') {
+    this.syncQueue.set(key, {
+      fetchFn,
+      priority,
+      scheduledAt: Date.now(),
+      attempts: 0
+    });
+
+    if (this.isOnline) {
+      this.processSyncQueue();
+    }
+  }
+
+  async processSyncQueue() {
+    if (!this.isOnline || this.syncQueue.size === 0) return;
+
+    const entries = Array.from(this.syncQueue.entries())
+      .sort((a, b) => this.getPriorityValue(b[1].priority) - this.getPriorityValue(a[1].priority));
+
+    for (const [key, job] of entries) {
+      if (job.attempts >= 3) {
+        this.syncQueue.delete(key);
+        continue;
+      }
+
+      try {
+        await job.fetchFn();
+        this.syncQueue.delete(key);
+      } catch (error) {
+        job.attempts++;
+        console.warn(`Background sync failed for ${key} (attempt ${job.attempts}):`, error.message);
+      }
+
+      await this.delay(1000);
+    }
+  }
+
+  getPriorityValue(priority) {
+    const values = { 'high': 3, 'normal': 2, 'low': 1 };
+    return values[priority] || 2;
+  }
+
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 }
