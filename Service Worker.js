@@ -32,6 +32,7 @@ class AdvancedServiceWorker {
     self.addEventListener('install', this.handleInstall.bind(this));
     self.addEventListener('activate', this.handleActivate.bind(this));
     self.addEventListener('fetch', this.handleFetch.bind(this));
+    self.addEventListener('message', this.handleMessage.bind(this));
   }
 
   async handleInstall(event) {
@@ -77,6 +78,16 @@ class AdvancedServiceWorker {
     } catch (error) {
       console.error(`Cache strategy ${strategy} failed:`, error);
       event.respondWith(this.networkOnly(request));
+    }
+  }
+
+  handleMessage(event) {
+    const { type, payload } = event.data;
+    
+    switch (type) {
+      case 'SKIP_WAITING':
+        self.skipWaiting();
+        break;
     }
   }
 
