@@ -43,7 +43,18 @@ class AdvancedServiceWorker {
       caches.open(`${this.version}-${cacheName}`)
     );
     
-    event.waitUntil(Promise.all(cachePromises));
+    // Preload critical offline resources
+    const staticCache = await caches.open(`${this.version}-static-cache`);
+    const criticalResources = [
+      '/',
+      '/offline.html',
+      '/css/styles.css',
+      '/js/app.js'
+    ];
+    
+    event.waitUntil(
+      Promise.all([...cachePromises, staticCache.addAll(criticalResources)])
+    );
   }
 
   async handleActivate(event) {
@@ -209,8 +220,12 @@ class AdvancedServiceWorker {
   getFallbackResponse(request) {
     const url = new URL(request.url);
     
-    if (url.pathname.endsWith('.html')) {
-      return caches.match('/offline.html');
+    if (url.pathname.endsWith('.html') || url.pathname === '/') {
+      return caches.match('/offline.html')
+        .then(response => response || new Response('Offline', {
+          status: 503,
+          headers: { 'Content-Type': 'text/html' }
+        }));
     }
     
     return new Response('Offline', {
