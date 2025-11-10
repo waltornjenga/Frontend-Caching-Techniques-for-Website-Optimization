@@ -250,4 +250,17 @@ class IntelligentAPICache {
     
     this.requestQueue.delete(cacheKey);
   }
+
+  generateCacheKey(url, options) {
+    const { headers = {}, body, method = 'GET' } = options;
+    
+    const keyData = {
+      url,
+      method,
+      headers: this.sanitizeHeaders(headers),
+      body: body ? this.hashString(JSON.stringify(body)) : null
+    };
+    
+    return `api:${this.hashString(JSON.stringify(keyData))}`;
+  }
 }
