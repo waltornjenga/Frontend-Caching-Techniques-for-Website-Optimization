@@ -72,4 +72,28 @@ class CacheInvalidationManager {
 
     return false;
   }
+
+  async smartRefresh(key, fetchFn, options = {}) {
+    const {
+      strategies = ['time-based', 'dependency-based'],
+      backgroundRefresh = true,
+      fallbackToStale = true
+    } = options;
+
+    for (const strategy of strategies) {
+      const shouldRefresh = await this.invalidateCache(key, strategy, options);
+      if (shouldRefresh) {
+        if (backgroundRefresh) {
+          this.backgroundSync.scheduleRefresh(key, fetchFn);
+          if (fallbackToStale) {
+            return this.getStaleData(key);
+          }
+        } else {
+          return this.refreshAndGet(key, fetchFn);
+        }
+      }
+    }
+
+    return this.getCacheData(key);
+  }
 }
