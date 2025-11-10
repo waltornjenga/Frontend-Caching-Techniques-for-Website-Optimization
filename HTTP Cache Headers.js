@@ -101,4 +101,15 @@ class CacheHeaderManager {
     // For file content or buffers
     return `"${crypto.createHash('md5').update(JSON.stringify(content)).digest('hex')}"`;
   }
+
+  // Express middleware
+  middleware() {
+    return (req, res, next) => {
+      res.setCacheHeaders = (type, content, options = {}) => {
+        options.req = req;
+        return this.setHeaders(res, type, content, options);
+      };
+      next();
+    };
+  }
 }
