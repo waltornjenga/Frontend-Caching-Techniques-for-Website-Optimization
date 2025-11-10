@@ -113,6 +113,16 @@ class CacheHeaderManager {
     };
   }
 
+  // Static file handler with smart caching
+  staticFileHandler(rootPath) {
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    return async (req, res) => {
+      // Implementation to be added
+    };
+  }
+
   getMimeType(ext) {
     const mimeTypes = {
       '.html': 'text/html; charset=utf-8',
