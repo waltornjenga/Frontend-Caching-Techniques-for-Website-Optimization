@@ -31,6 +31,7 @@ class AdvancedServiceWorker {
   init() {
     self.addEventListener('install', this.handleInstall.bind(this));
     self.addEventListener('activate', this.handleActivate.bind(this));
+    self.addEventListener('fetch', this.handleFetch.bind(this));
   }
 
   async handleInstall(event) {
@@ -57,6 +58,26 @@ class AdvancedServiceWorker {
 
     event.waitUntil(Promise.all(deletePromises));
     await self.clients.claim();
+  }
+
+  async handleFetch(event) {
+    const request = event.request;
+    
+    // Skip non-GET requests
+    if (request.method !== 'GET') return;
+
+    // Skip cross-origin requests
+    if (!this.isSameOrigin(request)) return;
+
+    const strategy = this.getCacheStrategy(request);
+    
+    try {
+      const response = await this[strategy](request);
+      event.respondWith(response);
+    } catch (error) {
+      console.error(`Cache strategy ${strategy} failed:`, error);
+      event.respondWith(this.networkOnly(request));
+    }
   }
 }
 
