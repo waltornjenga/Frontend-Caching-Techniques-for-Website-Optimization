@@ -105,6 +105,29 @@ class AdvancedServiceWorker {
     return this.networkOnly(request);
   }
 
+  async network_first(request) {
+    try {
+      const networkResponse = await fetch(request);
+      
+      if (networkResponse.ok) {
+        const cache = await this.getCache('api');
+        cache.put(request, networkResponse.clone());
+        return networkResponse;
+      }
+      
+      throw new Error('Network response not ok');
+    } catch (error) {
+      const cache = await this.getCache('api');
+      const cachedResponse = await cache.match(request);
+      
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      
+      return this.getFallbackResponse(request);
+    }
+  }
+
   isSameOrigin(request) {
     const url = new URL(request.url);
     return url.origin === self.location.origin;
