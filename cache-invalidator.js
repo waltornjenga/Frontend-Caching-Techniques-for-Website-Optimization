@@ -116,4 +116,18 @@ class CacheInvalidationManager {
     const entry = await this.getCacheEntry(key);
     return entry ? entry.data : null;
   }
+
+  registerDependency(parentKey, dependencyKeys) {
+    this.dependencies.set(parentKey, {
+      keys: dependencyKeys,
+      version: Date.now()
+    });
+  }
+
+  hasDependencyChanged(dependencyKey, cachedDependencies) {
+    const currentDep = this.dependencies.get(dependencyKey);
+    const cachedDep = cachedDependencies?.[dependencyKey];
+    
+    return currentDep && currentDep.version !== cachedDep?.version;
+  }
 }
