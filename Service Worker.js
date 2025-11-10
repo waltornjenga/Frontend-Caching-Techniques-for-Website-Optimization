@@ -91,6 +91,9 @@ class AdvancedServiceWorker {
       case 'CLEAR_CACHE':
         this.clearCache(payload);
         break;
+      case 'PRELOAD':
+        this.preloadResources(payload);
+        break;
     }
   }
 
@@ -101,6 +104,11 @@ class AdvancedServiceWorker {
     
     const deletePromises = cacheKeys.map(cacheName => caches.delete(cacheName));
     await Promise.all(deletePromises);
+  }
+
+  async preloadResources(urls) {
+    const cache = await this.getCache('static');
+    await cache.addAll(urls);
   }
 
   getCacheStrategy(request) {
