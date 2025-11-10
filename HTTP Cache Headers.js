@@ -14,6 +14,16 @@ class CacheHeaderManager {
         maxAge: 3600, // 1 hour
         staleWhileRevalidate: 86400, // 24 hours
         vary: 'Accept-Encoding, Cookie'
+      },
+      api: {
+        maxAge: 300, // 5 minutes
+        staleWhileRevalidate: 3600, // 1 hour
+        vary: 'Authorization, Accept-Encoding'
+      },
+      private: {
+        maxAge: 0,
+        noCache: true,
+        private: true
       }
     };
   }
