@@ -171,4 +171,69 @@ class IntelligentAPICache {
     this.circuitBreaker = new CircuitBreaker();
     this.requestQueue = new Map();
   }
+
+  async cachedFetch(url, options = {}) {
+    const {
+      ttl = 300000,
+      forceRefresh = false,
+      deduplicate = true,
+      fallback = null,
+      validate = null
+    } = options;
+
+    const cacheKey = this.generateCacheKey(url, options);
+    
+    if (!forceRefresh) {
+      const cached = await this.cache.get(cacheKey);
+      if (cached && (!validate || validate(cached))) {
+        return cached;
+      }
+    }
+
+    if (deduplicate && this.pendingRequests.has(cacheKey)) {
+      return new Promise((resolve, reject) => {
+        const queue = this.requestQueue.get(cacheKey) || [];
+        queue.push({ resolve, reject });
+        this.requestQueue.set(cacheKey, queue);
+      });
+    }
+
+    this.pendingRequests.set(cacheKey, true);
+
+    try {
+      if (!this.circuitBreaker.canRequest(url)) {
+        throw new Error('Circuit breaker open');
+      }
+
+      const response = await fetch(url, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      await this.cache.set(cacheKey, data, { ttl });
+      
+      this.processQueue(cacheKey, data);
+      
+      return data;
+    } catch (error) {
+      this.circuitBreaker.recordFailure(url);
+      
+      if (fallback === 'stale') {
+        const stale = await this.cache.get(cacheKey, { skipRedis: true });
+        if (stale) {
+          console.warn('Returning stale data due to error:', error.message);
+          this.processQueue(cacheKey, stale);
+          return stale;
+        }
+      }
+      
+      this.processQueue(cacheKey, null, error);
+      throw error;
+    } finally {
+      this.pendingRequests.delete(cacheKey);
+    }
+  }
 }
