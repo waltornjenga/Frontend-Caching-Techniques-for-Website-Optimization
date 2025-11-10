@@ -229,4 +229,30 @@ class CacheInvalidationManager {
     }
     return chunks;
   }
+
+  getCacheStats() {
+    const stats = {
+      totalEntries: this.memoryCache.size,
+      totalSize: this.getTotalCacheSize(),
+      hitRate: this.calculateHitRate(),
+      mostAccessed: this.getMostAccessedKeys(10),
+      oldestEntry: this.getOldestEntry()
+    };
+
+    return stats;
+  }
+
+  calculateHitRate() {
+    const totalAccess = Array.from(this.memoryCache.values())
+      .reduce((sum, entry) => sum + entry.accessCount, 0);
+    
+    return totalAccess > 0 ? this.hitCount / totalAccess : 0;
+  }
+
+  getMostAccessedKeys(count) {
+    return Array.from(this.memoryCache.entries())
+      .sort((a, b) => b[1].accessCount - a[1].accessCount)
+      .slice(0, count)
+      .map(([key, entry]) => ({ key, accesses: entry.accessCount }));
+  }
 }
