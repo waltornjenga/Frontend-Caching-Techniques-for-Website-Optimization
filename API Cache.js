@@ -45,4 +45,21 @@ class HybridCache {
     this.stats.misses++;
     return null;
   }
+
+  async set(key, value, options = {}) {
+    const ttl = options.ttl || this.defaultTTL;
+    const priority = options.priority || 1;
+    
+    this.setToMemory(key, value, ttl, priority);
+    
+    if (this.redisClient) {
+      try {
+        await this.setToRedis(key, value, ttl);
+      } catch (error) {
+        console.warn('Redis set failed:', error);
+      }
+    }
+    
+    return true;
+  }
 }
