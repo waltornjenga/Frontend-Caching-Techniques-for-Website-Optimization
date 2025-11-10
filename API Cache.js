@@ -110,4 +110,24 @@ class HybridCache {
     const serialized = typeof value === 'string' ? value : JSON.stringify(value);
     await this.redisClient.setex(key, Math.ceil(ttl / 1000), serialized);
   }
+
+  evictFromMemory() {
+    const entries = Array.from(this.memoryCache.entries());
+    
+    entries.sort((a, b) => {
+      const scoreA = a[1].lastAccessed * a[1].priority;
+      const scoreB = b[1].lastAccessed * b[1].priority;
+      return scoreA - scoreB;
+    });
+    
+    const evictCount = Math.max(1, Math.floor(this.memoryLimit * 0.1));
+    for (let i = 0; i < evictCount; i++) {
+      this.memoryCache.delete(entries[i][0]);
+    }
+  }
+
+  recordHit(key) {
+    const count = this.hitCounter.get(key) || 0;
+    this.hitCounter.set(key, count + 1);
+  }
 }
