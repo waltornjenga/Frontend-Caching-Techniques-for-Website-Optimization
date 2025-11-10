@@ -7,4 +7,21 @@ class CacheInvalidationManager {
     
     this.setupStrategies();
   }
+
+  setupStrategies() {
+    this.invalidationStrategies.set('time-based', {
+      check: (cacheEntry, options) => {
+        const age = Date.now() - cacheEntry.timestamp;
+        return age > (options.maxAge || 3600000);
+      },
+      action: 'refresh'
+    });
+
+    this.invalidationStrategies.set('version-based', {
+      check: (cacheEntry, options) => {
+        return cacheEntry.version !== options.currentVersion;
+      },
+      action: 'clear'
+    });
+  }
 }
