@@ -128,6 +128,10 @@ class AdvancedServiceWorker {
     }
   }
 
+  async network_only(request) {
+    return fetch(request);
+  }
+
   isSameOrigin(request) {
     const url = new URL(request.url);
     return url.origin === self.location.origin;
