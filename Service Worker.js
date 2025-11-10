@@ -92,6 +92,19 @@ class AdvancedServiceWorker {
     return 'network_first';
   }
 
+  async cache_first(request) {
+    const cache = await this.getCache('static');
+    const cachedResponse = await cache.match(request);
+    
+    if (cachedResponse) {
+      // Background update
+      this.updateCache(request, cache);
+      return cachedResponse;
+    }
+
+    return this.networkOnly(request);
+  }
+
   isSameOrigin(request) {
     const url = new URL(request.url);
     return url.origin === self.location.origin;
