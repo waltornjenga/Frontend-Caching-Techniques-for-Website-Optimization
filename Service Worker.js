@@ -79,6 +79,18 @@ class AdvancedServiceWorker {
       event.respondWith(this.networkOnly(request));
     }
   }
+
+  getCacheStrategy(request) {
+    const url = new URL(request.url);
+    
+    for (const [type, config] of Object.entries(this.cacheConfig)) {
+      if (config.patterns.some(pattern => pattern.test(url.pathname))) {
+        return config.strategies[0].replace('-', '_');
+      }
+    }
+    
+    return 'network_first';
+  }
 }
 
 // Instantiate the service worker
