@@ -119,7 +119,33 @@ class CacheHeaderManager {
     const path = require('path');
     
     return async (req, res) => {
-      // Implementation to be added
+      try {
+        const filePath = path.join(rootPath, req.path);
+        const stats = await fs.stat(filePath);
+        
+        if (!stats.isFile()) {
+          res.status(404).end();
+          return;
+        }
+
+        const content = await fs.readFile(filePath);
+        const ext = path.extname(filePath).toLowerCase();
+        
+        let cacheType = 'static';
+        if (ext === '.html') cacheType = 'dynamic';
+        if (ext === '.json') cacheType = 'api';
+
+        const shouldSendContent = res.setCacheHeaders(cacheType, content, {
+          lastModified: stats.mtime
+        });
+
+        if (shouldSendContent) {
+          res.setHeader('Content-Type', this.getMimeType(ext));
+          res.end(content);
+        }
+      } catch (error) {
+        res.status(404).end();
+      }
     };
   }
 
