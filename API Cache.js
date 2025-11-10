@@ -286,4 +286,16 @@ class IntelligentAPICache {
     }
     return hash.toString(36);
   }
+
+  async preload(urls, options = {}) {
+    const promises = urls.map(url => 
+      this.cachedFetch(url, { ...options, deduplicate: false })
+        .catch(error => {
+          console.warn(`Preload failed for ${url}:`, error.message);
+          return null;
+        })
+    );
+    
+    return Promise.all(promises);
+  }
 }
