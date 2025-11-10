@@ -23,5 +23,23 @@ class CacheInvalidationManager {
       },
       action: 'clear'
     });
+
+    this.invalidationStrategies.set('dependency-based', {
+      check: (cacheEntry, options) => {
+        return options.dependencies.some(dep => 
+          this.hasDependencyChanged(dep, cacheEntry.dependencies)
+        );
+      },
+      action: 'clear'
+    });
+
+    this.invalidationStrategies.set('usage-based', {
+      check: (cacheEntry, options) => {
+        const { maxSize = 100, minHits = 1 } = options;
+        return cacheEntry.accessCount < minHits && 
+               this.getTotalCacheSize() > maxSize;
+      },
+      action: 'clear'
+    });
   }
 }
