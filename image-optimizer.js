@@ -234,3 +234,29 @@ class IntelligentImageCache {
     });
   }
 }
+
+const imageStyles = `
+.lqip-loading {
+  filter: blur(20px);
+  transform: scale(1.1);
+  transition: filter 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.lqip-loaded {
+  filter: blur(0);
+  transform: scale(1);
+}
+
+.image-fade-in {
+  opacity: 0;
+  transition: opacity 0.3s ease-in;
+}
+
+.image-fade-in.loaded {
+  opacity: 1;
+}
+`;
+
+const styleSheet = document.createElement('style');
+styleSheet.textContent = imageStyles;
+document.head.appendChild(styleSheet);
