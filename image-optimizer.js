@@ -1,6 +1,6 @@
 class IntelligentImageCache {
   constructor(options = {}) {
-    this.cache = caches.open('images-v1');
+    this.cache = caches.open('images-v3');
     this.placeholderCache = new Map();
     this.intersectionObserver = new IntersectionObserver(this.handleIntersection.bind(this), {
       rootMargin: '50px 0px',
@@ -46,7 +46,8 @@ class IntelligentImageCache {
         set.push({
           url: optimizedUrl,
           width: size,
-          format
+          format,
+          size: await this.getImageSize(optimizedUrl)
         });
       }
     }
@@ -233,6 +234,17 @@ class IntelligentImageCache {
       document.head.appendChild(link);
     });
   }
+
+  async getImageSize(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({ width: img.width, height: img.height });
+      };
+      img.onerror = () => resolve({ width: 0, height: 0 });
+      img.src = src;
+    });
+  }
 }
 
 const imageStyles = `
@@ -254,6 +266,21 @@ const imageStyles = `
 
 .image-fade-in.loaded {
   opacity: 1;
+}
+
+.aspect-ratio-box {
+  position: relative;
+  height: 0;
+  overflow: hidden;
+}
+
+.aspect-ratio-box img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 `;
 
