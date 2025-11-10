@@ -98,17 +98,25 @@ class AdvancedServiceWorker {
   }
 
   async clearCache(types = []) {
-    const cacheKeys = types.length > 0 
-      ? types.map(type => `${this.version}-${this.cacheConfig[type].name}`)
-      : await caches.keys();
-    
-    const deletePromises = cacheKeys.map(cacheName => caches.delete(cacheName));
-    await Promise.all(deletePromises);
+    try {
+      const cacheKeys = types.length > 0 
+        ? types.map(type => `${this.version}-${this.cacheConfig[type].name}`)
+        : await caches.keys();
+      
+      const deletePromises = cacheKeys.map(cacheName => caches.delete(cacheName));
+      await Promise.all(deletePromises);
+    } catch (error) {
+      console.error('Cache clearing failed:', error);
+    }
   }
 
   async preloadResources(urls) {
-    const cache = await this.getCache('static');
-    await cache.addAll(urls);
+    try {
+      const cache = await this.getCache('static');
+      await cache.addAll(urls);
+    } catch (error) {
+      console.error('Resource preloading failed:', error);
+    }
   }
 
   getCacheStrategy(request) {
