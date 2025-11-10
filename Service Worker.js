@@ -137,6 +137,17 @@ class AdvancedServiceWorker {
     return caches.open(`${this.version}-${config.name}`);
   }
 
+  async updateCache(request, cache) {
+    try {
+      const networkResponse = await fetch(request);
+      if (networkResponse.ok) {
+        await cache.put(request, networkResponse.clone());
+      }
+    } catch (error) {
+      // Silent fail - we have cached version
+    }
+  }
+
   isSameOrigin(request) {
     const url = new URL(request.url);
     return url.origin === self.location.origin;
