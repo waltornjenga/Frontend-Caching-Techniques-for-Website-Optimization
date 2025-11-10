@@ -163,3 +163,12 @@ class HybridCache {
     };
   }
 }
+
+class IntelligentAPICache {
+  constructor(options = {}) {
+    this.cache = new HybridCache(options);
+    this.pendingRequests = new Map();
+    this.circuitBreaker = new CircuitBreaker();
+    this.requestQueue = new Map();
+  }
+}
