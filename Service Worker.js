@@ -32,6 +32,17 @@ class AdvancedServiceWorker {
     self.addEventListener('install', this.handleInstall.bind(this));
     self.addEventListener('activate', this.handleActivate.bind(this));
   }
+
+  async handleInstall(event) {
+    self.skipWaiting();
+    
+    const cacheKeys = Object.values(this.cacheConfig).map(config => config.name);
+    const cachePromises = cacheKeys.map(cacheName => 
+      caches.open(`${this.version}-${cacheName}`)
+    );
+    
+    event.waitUntil(Promise.all(cachePromises));
+  }
 }
 
 // Instantiate the service worker
